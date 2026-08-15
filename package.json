@@ -1,6 +1,6 @@
 {
   "name": "kaleka-launcher",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Kaleka Minecraft Launcher",
   "main": "dist/main/main.js",
   "scripts": {

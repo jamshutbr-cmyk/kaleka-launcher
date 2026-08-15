@@ -3,7 +3,7 @@ import Header from './components/Header';
 import MainContent from './components/MainContent';
 import Sidebar from './components/Sidebar';
 import { ToastProvider } from './components/Toast';
-import { useUpdater } from './hooks/useUpdater';
+import { UpdateToast } from './components/UpdateToast';
 import './App.css';
 
 interface ElyAccount {
@@ -20,8 +20,6 @@ function AppInner() {
     localStorage.getItem('username') || 'Steve'
   );
   const [elyAccount, setElyAccount] = useState<ElyAccount | null>(null);
-
-  useUpdater(); // Слушаем события авто-обновления
 
   useEffect(() => {
     const savedAccount = localStorage.getItem('elyAccount');
@@ -71,6 +69,7 @@ function AppInner() {
           onElyAccountChange={handleElyAccountChange}
         />
       </div>
+      <UpdateToast />
     </div>
   );
 }
