@@ -92,3 +92,8 @@
 .update-toast-btn:hover {
   filter: brightness(1.15);
 }
+
+.update-toast-icon-error {
+  background: #e05252;
+  color: white;
+}

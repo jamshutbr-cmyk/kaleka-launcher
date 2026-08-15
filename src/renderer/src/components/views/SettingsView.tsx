@@ -42,6 +42,12 @@ declare global {
       importBrowseFolder: () => Promise<string | null>;
       importRun: (sourcePath: string, folders: string[], targetVersion?: string) => Promise<any>;
       onImportProgress: (callback: (data: { status: string; percent: number }) => void) => void;
+      getAppVersion: () => Promise<string>;
+      updaterCheck: () => Promise<{ checking: boolean }>;
+      onUpdaterChecking: (cb: () => void) => void;
+      onUpdaterAvailable: (cb: (info: { version: string }) => void) => void;
+      onUpdaterNotAvailable: (cb: () => void) => void;
+      onUpdaterError: (cb: (msg: string) => void) => void;
     };
   }
 }
@@ -52,6 +58,11 @@ function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
   const [javaPath, setJavaPath] = useState('');
   const [elyLoading, setElyLoading] = useState(false);
   const [elyError, setElyError] = useState('');
+
+  // Обновления
+  const [appVersion, setAppVersion] = useState('');
+  const [updateChecking, setUpdateChecking] = useState(false);
+  const [updateStatusMsg, setUpdateStatusMsg] = useState('');
 
   // Import state
   const [importOpen, setImportOpen] = useState(false);
@@ -80,7 +91,37 @@ function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
       setImportProgress(data.percent);
       setImportStatus(data.status);
     });
+
+    window.electronAPI?.getAppVersion?.().then((v) => setAppVersion(v));
+    window.electronAPI?.onUpdaterChecking?.(() => {
+      setUpdateChecking(true);
+      setUpdateStatusMsg('Проверка обновлений...');
+    });
+    window.electronAPI?.onUpdaterAvailable?.((info) => {
+      setUpdateChecking(false);
+      setUpdateStatusMsg(`Найдено обновление ${info.version}, загружается...`);
+    });
+    window.electronAPI?.onUpdaterNotAvailable?.(() => {
+      setUpdateChecking(false);
+      setUpdateStatusMsg('У вас последняя версия');
+    });
+    window.electronAPI?.onUpdaterError?.((msg) => {
+      setUpdateChecking(false);
+      setUpdateStatusMsg(`Ошибка проверки обновления: ${msg}`);
+    });
   }, []);
+
+  const handleCheckUpdate = () => {
+    setUpdateChecking(true);
+    setUpdateStatusMsg('Проверка обновлений...');
+    window.electronAPI?.updaterCheck?.().then((res) => {
+      if (res && res.checking === false) {
+        // Например dev-режим — автообновление отключено, событий не будет
+        setUpdateChecking(false);
+        setUpdateStatusMsg('Проверка обновлений недоступна (dev-режим)');
+      }
+    });
+  };
 
   const handleRamChange = (val: number) => {
     setRam(val);
@@ -348,6 +389,23 @@ function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
         <button className="setting-btn icon-font" onClick={() => window.electronAPI?.openResourcepacksFolder()}>
           <span className="icon-font">P</span> Открыть
         </button>
+      </div>
+
+      <div className="setting-box setting-update">
+        <label className="setting-label-row">
+          <span>Обновления</span>
+          <span className="setting-hint">Версия: {appVersion || '...'}</span>
+        </label>
+        <div className="java-input-row">
+          <button className="ely-login-btn" onClick={handleCheckUpdate} disabled={updateChecking}>
+            {updateChecking ? 'Проверка...' : 'Проверить обновление'}
+          </button>
+        </div>
+        {updateStatusMsg && (
+          <div className={`import-result ${updateStatusMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
+            {updateStatusMsg}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Auto-updater
   updaterCheck: () => ipcRenderer.invoke('updater:check'),
+  updaterGetState: () => ipcRenderer.invoke('updater:get-state'),
   updaterInstall: () => ipcRenderer.invoke('updater:install'),
   onUpdaterChecking: (cb: () => void) => ipcRenderer.on('updater:checking', cb),
   onUpdaterAvailable: (cb: (info: { version: string }) => void) => ipcRenderer.on('updater:available', (_e, info) => cb(info)),

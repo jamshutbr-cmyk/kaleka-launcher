@@ -12,52 +12,69 @@ import { startOAuthFlow } from './auth/ElyByOAuth';
 
 let mainWindow: BrowserWindow | null = null;
 
+// Текущее состояние апдейтера — чтобы фронт мог получить его при монтировании
+let updaterState: { phase: string; version?: string; percent?: number } = { phase: 'idle' };
+
 // Настройка авто-обновления
 function setupAutoUpdater() {
   const isDev = !app.isPackaged;
-  if (isDev) return; // В dev режиме не проверяем обновления
+  if (isDev) return;
 
-  autoUpdater.autoDownload = true;       // Скачивать автоматически
-  autoUpdater.autoInstallOnAppQuit = true; // Устанавливать при закрытии
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  // Логируем в файл вручную
+  const logFile = path.join(app.getPath('userData'), 'updater.log');
+  const writeLog = (msg: string) => {
+    const line = `[${new Date().toISOString()}] ${msg}\n`;
+    fs.appendFileSync(logFile, line);
+  };
+
+  writeLog(`setupAutoUpdater called, version = ${app.getVersion()}`);
 
   autoUpdater.on('checking-for-update', () => {
+    writeLog('checking-for-update');
+    updaterState = { phase: 'checking' };
     mainWindow?.webContents.send('updater:checking');
   });
 
   autoUpdater.on('update-available', (info) => {
-    mainWindow?.webContents.send('updater:available', {
-      version: info.version,
-      releaseNotes: info.releaseNotes,
-    });
+    writeLog(`update-available: ${info.version}`);
+    updaterState = { phase: 'downloading', version: info.version, percent: 0 };
+    mainWindow?.webContents.send('updater:available', { version: info.version });
   });
 
-  autoUpdater.on('update-not-available', () => {
+  autoUpdater.on('update-not-available', (info) => {
+    writeLog(`update-not-available: ${info.version}`);
+    updaterState = { phase: 'idle' };
     mainWindow?.webContents.send('updater:not-available');
   });
 
   autoUpdater.on('download-progress', (progress) => {
-    mainWindow?.webContents.send('updater:progress', {
-      percent: Math.floor(progress.percent),
-      bytesPerSecond: progress.bytesPerSecond,
-      transferred: progress.transferred,
-      total: progress.total,
-    });
+    const percent = Math.floor(progress.percent);
+    writeLog(`download-progress: ${percent}%`);
+    updaterState = { ...updaterState, phase: 'downloading', percent };
+    mainWindow?.webContents.send('updater:progress', { percent });
   });
 
   autoUpdater.on('update-downloaded', (info) => {
-    mainWindow?.webContents.send('updater:downloaded', {
-      version: info.version,
-    });
+    writeLog(`update-downloaded: ${info.version}`);
+    updaterState = { phase: 'ready', version: info.version };
+    mainWindow?.webContents.send('updater:downloaded', { version: info.version });
   });
 
   autoUpdater.on('error', (err) => {
+    writeLog(`ERROR: ${err.message}\n${err.stack}`);
+    updaterState = { phase: 'idle' };
     mainWindow?.webContents.send('updater:error', err.message);
   });
 
-  // Проверяем обновления через 3 секунды после запуска
   setTimeout(() => {
-    autoUpdater.checkForUpdates().catch(() => {});
-  }, 3000);
+    writeLog('starting checkForUpdates...');
+    autoUpdater.checkForUpdates().catch((err) => {
+      writeLog(`checkForUpdates failed: ${err.message}`);
+    });
+  }, 5000);
 }
 
 function createWindow() {
@@ -174,8 +191,14 @@ ipcMain.handle('get-app-version', () => {
 // Авто-обновление
 ipcMain.handle('updater:check', async () => {
   if (!app.isPackaged) return { checking: false };
-  await autoUpdater.checkForUpdates().catch(() => {});
+  await autoUpdater.checkForUpdates().catch((err) => {
+    console.error('checkForUpdates failed:', err);
+  });
   return { checking: true };
+});
+
+ipcMain.handle('updater:get-state', () => {
+  return updaterState;
 });
 
 ipcMain.handle('updater:install', () => {
