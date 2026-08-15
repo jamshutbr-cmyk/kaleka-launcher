@@ -129,7 +129,7 @@ app.whenReady().then(() => {
         ...details.responseHeaders,
         'Access-Control-Allow-Origin': ['*'],
         'Content-Security-Policy': [
-          "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: blob: https://skinsystem.ely.by https://crafatar.com https://mc-heads.net; connect-src 'self' https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+          "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: blob: https://skinsystem.ely.by https://crafatar.com https://mc-heads.net https://cdn.modrinth.com https://media.forgecdn.net https://cursemaven.com; connect-src 'self' https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
         ],
       },
     });

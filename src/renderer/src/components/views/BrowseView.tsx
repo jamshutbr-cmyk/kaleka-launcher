@@ -245,7 +245,12 @@ function BrowseView() {
         )}
         {!loading && results.map(mod => (
           <div key={mod.id} className="mod-card">
-            {mod.icon ? <img src={mod.icon} alt={mod.name} className="mod-icon" /> : <div className="mod-icon-placeholder"><i className="bi bi-box"></i></div>}
+            <div className="mod-icon-wrap">
+              {mod.icon
+                ? <img src={mod.icon} alt={mod.name} className="mod-icon" />
+                : <div className="mod-icon-placeholder"><i className="bi bi-box"></i></div>
+              }
+            </div>
             <div className="mod-info">
               <div className="mod-name">{mod.name}</div>
               <div className="mod-description">{mod.description}</div>
