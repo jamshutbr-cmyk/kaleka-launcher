@@ -41,10 +41,21 @@
 
 *:focus {
   outline: none;
+  box-shadow: none;
 }
 
 *:focus-visible {
   outline: none;
+  box-shadow: none;
+}
+
+input:focus,
+button:focus,
+textarea:focus,
+select:focus,
+a:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 *::selection {

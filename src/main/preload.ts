@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   modsGetList: () => ipcRenderer.invoke('mods:get-list'),
   modsToggle: (modPath: string) => ipcRenderer.invoke('mods:toggle', modPath),
   modsDelete: (modPath: string) => ipcRenderer.invoke('mods:delete', modPath),
+  modsDropFiles: (filePaths: string[]) => ipcRenderer.invoke('mods:drop-files', filePaths),
 
   // Auto-updater
   updaterCheck: () => ipcRenderer.invoke('updater:check'),

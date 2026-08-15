@@ -22,6 +22,7 @@ declare global {
       modsGetList: () => Promise<{ success: boolean; mods?: ModInfo[]; error?: string }>;
       modsToggle: (modPath: string) => Promise<{ success: boolean; enabled?: boolean; error?: string }>;
       modsDelete: (modPath: string) => Promise<{ success: boolean; error?: string }>;
+      modsDropFiles: (filePaths: string[]) => Promise<{ fileName: string; success: boolean; error?: string }[]>;
     };
   }
 }
@@ -32,7 +33,10 @@ function ModsView() {
   const [filter, setFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [versionFilter, setVersionFilter] = useState<'all' | '1.16.5' | '1.21.11'>('all');
+  const [versionDropdownOpen, setVersionDropdownOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ mod: ModInfo } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dropping, setDropping] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -106,6 +110,70 @@ function ModsView() {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Принимаем только если есть хотя бы один .jar
+    const hasJar = Array.from(e.dataTransfer.items).some(
+      (item) => item.kind === 'file'
+    );
+    if (hasJar) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    const jarFiles = files.filter(
+      (f) => f.name.endsWith('.jar') || f.name.endsWith('.jar.disabled')
+    );
+
+    if (jarFiles.length === 0) {
+      showToast('Перетащите .jar файлы модов', 'error');
+      return;
+    }
+
+    // В Electron File.path содержит реальный путь к файлу
+    const filePaths = jarFiles.map((f) => (f as any).path as string).filter(Boolean);
+    if (filePaths.length === 0) {
+      showToast('Не удалось получить пути файлов', 'error');
+      return;
+    }
+
+    setDropping(true);
+    try {
+      const results = await window.electronAPI?.modsDropFiles(filePaths);
+      const ok = results?.filter((r) => r.success).length ?? 0;
+      const fail = results?.filter((r) => !r.success).length ?? 0;
+
+      if (ok > 0) {
+        showToast(
+          fail > 0
+            ? `Добавлено ${ok} мод(а), ${fail} не удалось`
+            : ok === 1
+            ? `Мод добавлен`
+            : `Добавлено модов: ${ok}`,
+          'success'
+        );
+        await loadMods();
+      } else {
+        showToast('Не удалось добавить моды', 'error');
+      }
+    } catch (err) {
+      showToast('Ошибка при добавлении модов', 'error');
+    } finally {
+      setDropping(false);
+    }
+  };
+
   const filteredMods = mods.filter((mod) => {
     // Фильтр по состоянию
     if (filter === 'enabled' && !mod.enabled) return false;
@@ -136,7 +204,12 @@ function ModsView() {
   };
 
   return (
-    <div className="mods-view">
+    <div
+      className={`mods-view ${isDragOver ? 'drag-over' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Confirm dialog */}
       {confirmDialog && (
         <ConfirmDialog
@@ -204,20 +277,54 @@ function ModsView() {
         </div>
 
         <div className="mods-version-filter">
-          <select value={versionFilter} onChange={(e) => setVersionFilter(e.target.value as any)}>
-            <option value="all">Все версии</option>
-            <option value="1.16.5">1.16.5</option>
-            <option value="1.21.11">1.21.11</option>
-          </select>
+          <div className={`version-dropdown ${versionDropdownOpen ? 'open' : ''}`}>
+            <button
+              className="version-dropdown-trigger"
+              onClick={() => setVersionDropdownOpen((v) => !v)}
+            >
+              <span>{versionFilter === 'all' ? 'Все версии' : versionFilter}</span>
+              <svg className="version-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {versionDropdownOpen && (
+              <>
+                <div className="version-dropdown-backdrop" onClick={() => setVersionDropdownOpen(false)} />
+                <div className="version-dropdown-menu">
+                  {(['all', '1.16.5', '1.21.11'] as const).map((v) => (
+                    <button
+                      key={v}
+                      className={`version-dropdown-item ${versionFilter === v ? 'active' : ''}`}
+                      onClick={() => { setVersionFilter(v); setVersionDropdownOpen(false); }}
+                    >
+                      {v === 'all' ? 'Все версии' : v}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Drop overlay */}
+      {isDragOver && (
+        <div className="mods-drop-overlay">
+          <div className="mods-drop-hint">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span>Отпустите для добавления модов</span>
+          </div>
+        </div>
+      )}
+
       {/* Mods List */}
       <div className="mods-list">
-        {loading ? (
+        {loading || dropping ? (
           <div className="mods-loading">
             <div className="spinner"></div>
-            <span>Загрузка модов...</span>
+            <span>{dropping ? 'Добавляем моды...' : 'Загрузка модов...'}</span>
           </div>
         ) : filteredMods.length === 0 ? (
           <div className="mods-empty">
@@ -225,7 +332,7 @@ function ModsView() {
               <>
                 <div className="empty-icon empty-icon-box"></div>
                 <span>Моды не найдены</span>
-                <span className="empty-hint">Добавьте .jar файлы в папку mods</span>
+                <span className="empty-hint">Перетащите .jar файлы сюда или добавьте вручную</span>
               </>
             ) : (
               <>

@@ -4,6 +4,46 @@
   gap: 8px;
 }
 
+/* Tabbar */
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--input-bg-color);
+  padding: 4px;
+  border-radius: var(--border-radius-sm);
+  flex-shrink: 0;
+}
+
+.settings-tab {
+  flex: 1;
+  padding: 9px 16px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--border-radius-sm) - 2px);
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.settings-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-color);
+}
+
+.settings-tab.active {
+  background: color-mix(in srgb, var(--accent-color), #9b9b9b 40%);
+  color: black;
+  font-family: SFBold;
+}
+
+.settings-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .setting-box {
   padding: calc(var(--padding-md) + 4px);
   border-radius: var(--border-radius-sm);
@@ -517,4 +557,113 @@ input[type="range"]:active::-webkit-slider-thumb {
 .import-version-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: modal-fade-in 0.15s ease;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-window {
+  background: var(--bg-color, #1a1a1a);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  animation: modal-slide-in 0.15s ease;
+  overflow: hidden;
+}
+
+@keyframes modal-slide-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+  font-family: SFBold;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+.modal-close-btn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--border-radius-sm) - 2px);
+  color: var(--text-color-grayed);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
+}
+
+.modal-close-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modal-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.modal-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+}
+
+/* Две кнопки рядом во вкладке Дополнительно */
+.kl-buttons-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

@@ -467,6 +467,33 @@ ipcMain.handle('mods:delete', async (_event, modPath: string) => {
   }
 });
 
+// Копировать перетащенные .jar файлы в папку mods
+ipcMain.handle('mods:drop-files', async (_event, filePaths: string[]) => {
+  const modsDir = path.join(getMinecraftDir(), 'mods');
+  if (!fs.existsSync(modsDir)) {
+    fs.mkdirSync(modsDir, { recursive: true });
+  }
+
+  const results: { fileName: string; success: boolean; error?: string }[] = [];
+
+  for (const src of filePaths) {
+    if (!src.endsWith('.jar') && !src.endsWith('.jar.disabled')) {
+      results.push({ fileName: path.basename(src), success: false, error: 'Не .jar файл' });
+      continue;
+    }
+    const fileName = path.basename(src);
+    const dest = path.join(modsDir, fileName);
+    try {
+      fs.copyFileSync(src, dest);
+      results.push({ fileName, success: true });
+    } catch (err: any) {
+      results.push({ fileName, success: false, error: err.message });
+    }
+  }
+
+  return results;
+});
+
 // .kl modpack export/import
 import { exportKlPack, importKlPack, readKlManifest } from './minecraft/KlPack';
 

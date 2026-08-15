@@ -30,7 +30,7 @@ function HomeView({ username, elyAccount }: { username: string; elyAccount: ElyA
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState('');
   const [logs, setLogs] = useState<{ text: string; type: string }[]>([]);
-  const [logsOpenFor, setLogsOpenFor] = useState<string | null>(null);
+  const [logsModalOpen, setLogsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -110,13 +110,13 @@ function HomeView({ username, elyAccount }: { username: string; elyAccount: ElyA
     } catch (err: any) {
       console.error('Launch error:', err);
       setLogs((prev) => [...prev, { text: `[ОШИБКА] ${err.message}`, type: 'error' }]);
-      setLogsOpenFor(versionId);
+      setLogsModalOpen(true);
       setDownloading(null);
     }
   };
 
-  const toggleLogs = (versionId: string) => {
-    setLogsOpenFor((cur) => (cur === versionId ? null : versionId));
+  const toggleLogs = () => {
+    setLogsModalOpen((v) => !v);
   };
 
   const copyLogs = () => {
@@ -132,10 +132,9 @@ function HomeView({ username, elyAccount }: { username: string; elyAccount: ElyA
       <div className="versions-grid">
         {versions.map((version) => {
           const isDownloading = downloading === version.versionId;
-          const isLogsOpen = logsOpenFor === version.versionId;
 
           return (
-            <div key={version.id} className={`version-card ${isLogsOpen ? 'logs-expanded' : ''}`}>
+            <div key={version.id} className="version-card">
               <img src={version.image} alt={version.name} className="version-image" />
               <div className="version-content">
                 <div className="version-title">{version.name}</div>
@@ -156,7 +155,7 @@ function HomeView({ username, elyAccount }: { username: string; elyAccount: ElyA
                 <div className="version-actions">
                   <div
                     className="version-log-btn"
-                    onClick={() => toggleLogs(version.versionId)}
+                    onClick={toggleLogs}
                     title="Логи"
                   >
                     <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
@@ -178,44 +177,50 @@ function HomeView({ username, elyAccount }: { username: string; elyAccount: ElyA
                   </div>
                 </div>
               )}
-
-              {isLogsOpen && (
-                <div className="version-log-panel">
-                  <div className="log-panel-header">
-                    <span className="log-panel-title">Логи</span>
-                    {logs.length > 0 && (
-                      <button className="log-copy-btn" onClick={copyLogs} title="Скопировать логи">
-                        {copied ? (
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        ) : (
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <rect x="4" y="1" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-                            <rect x="1" y="3" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                          </svg>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                  <div className="log-panel-content">
-                    {logs.length === 0 ? (
-                      <div className="log-empty">Запустите игру чтобы увидеть логи</div>
-                    ) : (
-                      logs.map((entry, i) => (
-                        <div key={i} className={`log-line log-${entry.type}`}>
-                          {entry.text}
-                        </div>
-                      ))
-                    )}
-                    <div ref={logEndRef} />
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
+
+      {/* Модал логов */}
+      {logsModalOpen && (
+        <div className="modal-overlay" onClick={() => setLogsModalOpen(false)}>
+          <div className="logs-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="logs-modal-header">
+              <span className="logs-modal-title">Логи</span>
+              <div className="logs-modal-actions">
+                {logs.length > 0 && (
+                  <button className="log-copy-btn" onClick={copyLogs} title="Скопировать">
+                    {copied ? (
+                      <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+                        <rect x="4" y="1" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2"/>
+                        <rect x="1" y="3" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                      </svg>
+                    )}
+                  </button>
+                )}
+                <button className="logs-modal-close" onClick={() => setLogsModalOpen(false)}>✕</button>
+              </div>
+            </div>
+            <div className="logs-modal-body">
+              {logs.length === 0 ? (
+                <div className="log-empty">Запустите игру чтобы увидеть логи</div>
+              ) : (
+                logs.map((entry, i) => (
+                  <div key={i} className={`log-line log-${entry.type}`}>
+                    {entry.text}
+                  </div>
+                ))
+              )}
+              <div ref={logEndRef} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

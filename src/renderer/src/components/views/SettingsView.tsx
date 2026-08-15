@@ -76,6 +76,7 @@ declare global {
 }
 
 function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: SettingsViewProps) {
+  const [activeTab, setActiveTab] = useState<'settings' | 'extra'>('settings');
   const [ram, setRam] = useState(4096);
   const [maxRam, setMaxRam] = useState(16384);
   const [javaPath, setJavaPath] = useState('');
@@ -88,7 +89,6 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
   const [updateStatusMsg, setUpdateStatusMsg] = useState('');
 
   // .kl modpack — export
-  const [klExportOpen, setKlExportOpen] = useState(false);
   const [klPackName, setKlPackName] = useState('Моя сборка');
   const [klPackVersion, setKlPackVersion] = useState<'1.16.5' | '1.21.11'>('1.21.11');
   const [klExporting, setKlExporting] = useState(false);
@@ -105,16 +105,20 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
   const [klImportStatus, setKlImportStatus] = useState('');
   const [klImportResultMsg, setKlImportResultMsg] = useState('');
 
-  // Import state
-  const [importOpen, setImportOpen] = useState(false);
+  // Import launcher state
   const [launchers, setLaunchers] = useState<LauncherInstall[]>([]);
   const [selectedSource, setSelectedSource] = useState<LauncherInstall | null>(null);
   const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
-  const [selectedVersion, setSelectedVersion] = useState<string>('1.21.11'); // Версия для фильтрации модов
+  const [selectedVersion, setSelectedVersion] = useState<string>('1.21.11');
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importStatus, setImportStatus] = useState('');
   const [importDone, setImportDone] = useState(false);
+
+  // Modals
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [klExportModalOpen, setKlExportModalOpen] = useState(false);
+  const [klImportModalOpen, setKlImportModalOpen] = useState(false);
 
   useEffect(() => {
     if (window.electronAPI?.getTotalMemory) {
@@ -152,7 +156,6 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
     });
   }, []);
 
-  // Подписка на прогресс экспорта/импорта .kl
   useEffect(() => {
     window.electronAPI?.onKlExportProgress?.((p) => {
       setKlExportProgress(p.percent);
@@ -164,10 +167,11 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
     });
   }, []);
 
-  // Лаунчер открыт двойным кликом по .kl файлу — сразу показываем превью
   useEffect(() => {
     if (pendingKlPath) {
       previewKlFile(pendingKlPath);
+      setActiveTab('extra');
+      setKlImportModalOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingKlPath]);
@@ -187,7 +191,10 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
 
   const handlePickKlFile = async () => {
     const filePath = await window.electronAPI?.klPickFile?.();
-    if (filePath) await previewKlFile(filePath);
+    if (filePath) {
+      await previewKlFile(filePath);
+      setKlImportModalOpen(true);
+    }
   };
 
   const handleConfirmKlImport = async () => {
@@ -228,7 +235,6 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
     setUpdateStatusMsg('Проверка обновлений...');
     window.electronAPI?.updaterCheck?.().then((res) => {
       if (res && res.checking === false) {
-        // Например dev-режим — автообновление отключено, событий не будет
         setUpdateChecking(false);
         setUpdateStatusMsg('Проверка обновлений недоступна (dev-режим)');
       }
@@ -278,11 +284,12 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
     onElyAccountChange(null);
   };
 
-  const openImport = async () => {
-    setImportOpen(true);
+  const openImportModal = async () => {
     setImportDone(false);
     setSelectedSource(null);
     setSelectedFolders([]);
+    setImportStatus('');
+    setImportModalOpen(true);
     const found = await window.electronAPI?.importDetectLaunchers() ?? [];
     setLaunchers(found);
   };
@@ -317,10 +324,7 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
     setImportProgress(0);
     setImportStatus('Подготовка...');
     setImportDone(false);
-    
-    // Передаём версию только если импортируем моды
     const version = selectedFolders.includes('mods') ? selectedVersion : undefined;
-    
     const result = await window.electronAPI?.importRun(selectedSource.path, selectedFolders, version);
     setImporting(false);
     setImportDone(true);
@@ -332,152 +336,233 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
 
   return (
     <div className="settings-view">
-      <div className="setting-box setting-ram">
-        <label>
-          <span>RAM</span>
-          <span className="ram-value">
-            {formatMemory(ram)}
-            <span style={{ fontSize: '11px', fontFamily: 'SFRegular', color: 'var(--text-color-grayed)', marginLeft: '4px' }}>
-              / {formatMemory(maxRam)}
-            </span>
-          </span>
-        </label>
-        <input
-          type="range" min="1024" max={maxRam} step="100" value={ram}
-          onChange={(e) => handleRamChange(Number(e.target.value))}
-          style={{ background: `linear-gradient(to right, var(--accent-color-mixed) 0%, var(--accent-color-mixed) ${getRamProgress()}%, #2b2b2ba6 ${getRamProgress()}%, #2b2b2ba6 100%)` }}
-        />
+
+      {/* ── Tabbar ── */}
+      <div className="settings-tabs">
+        <button
+          className={`settings-tab${activeTab === 'settings' ? ' active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          Настройки
+        </button>
+        <button
+          className={`settings-tab${activeTab === 'extra' ? ' active' : ''}`}
+          onClick={() => setActiveTab('extra')}
+        >
+          Дополнительно
+        </button>
       </div>
 
-      <div className="setting-box setting-java">
-        <label className="setting-label-row">
-          <span>Java</span>
-          <span className="setting-hint">Оставьте пустым для автоопределения</span>
-        </label>
-        <div className="java-input-row">
-          <input type="text" className="java-path-input" placeholder="Путь к java.exe..."
-            value={javaPath} onChange={(e) => handleJavaPathChange(e.target.value)} spellCheck={false} />
-          <button className="java-browse-btn" onClick={handleBrowseJava} title="Выбрать файл">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h2.764c.958 0 1.408 1.167.707 1.707L6.207 4.5H12.5A1.5 1.5 0 0 1 14 6v6a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12V3.5z" fill="currentColor" opacity=".8"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+      {/* ── Вкладка: Настройки ── */}
+      {activeTab === 'settings' && (
+        <div className="settings-tab-content">
 
-      <div className="setting-box setting-ely">
-        <label className="setting-label-row">
-          <span>Аккаунт Ely.by</span>
-          <span className="setting-hint">Для доступа к лицензионным серверам</span>
-        </label>
-        {elyAccount ? (
-          <div className="ely-account-info">
-            <div className="ely-account-status">
-              <div className="ely-username">{elyAccount.username}</div>
-              <div className="ely-status">Подключено</div>
-            </div>
-            <button className="ely-logout-btn" onClick={handleElyLogout}>Выйти</button>
+          <div className="setting-box setting-ram">
+            <label>
+              <span>RAM</span>
+              <span className="ram-value">
+                {formatMemory(ram)}
+                <span style={{ fontSize: '11px', fontFamily: 'SFRegular', color: 'var(--text-color-grayed)', marginLeft: '4px' }}>
+                  / {formatMemory(maxRam)}
+                </span>
+              </span>
+            </label>
+            <input
+              type="range" min="1024" max={maxRam} step="100" value={ram}
+              onChange={(e) => handleRamChange(Number(e.target.value))}
+              style={{ background: `linear-gradient(to right, var(--accent-color-mixed) 0%, var(--accent-color-mixed) ${getRamProgress()}%, #2b2b2ba6 ${getRamProgress()}%, #2b2b2ba6 100%)` }}
+            />
           </div>
-        ) : (
-          <>
-            <button className="ely-login-btn" onClick={handleElyOAuthLogin} disabled={elyLoading}>
-              {elyLoading ? 'Открываем браузер...' : 'Войти через Ely.by'}
-            </button>
-            {elyError && <div className="ely-error">{elyError}</div>}
-          </>
-        )}
-      </div>
 
-      <div className="setting-box setting-import">
-        <label className="setting-label-row">
-          <span>Импорт данных</span>
-          <span className="setting-hint">Перенос из TLauncher / Legacy</span>
-        </label>
-        {!importOpen ? (
-          <button className="import-open-btn" onClick={openImport}>
-            Импортировать из другого лаунчера
-          </button>
-        ) : (
-          <div className="import-panel">
-            <div className="import-launchers">
-              {launchers.length === 0 && (
-                <div className="import-empty">Лаунчеры не найдены автоматически</div>
-              )}
-              {launchers.map((l) => (
-                <div
-                  key={l.path}
-                  className={`import-launcher-item ${selectedSource?.path === l.path ? 'selected' : ''}`}
-                  onClick={() => selectLauncher(l)}
-                >
-                  <div className="import-launcher-name">{l.name}</div>
-                  <div className="import-launcher-path">{l.path}</div>
-                </div>
-              ))}
-              <button className="import-browse-btn" onClick={handleBrowseImport}>
-                Указать путь вручную
+          <div className="setting-box setting-java">
+            <label className="setting-label-row">
+              <span>Java</span>
+              <span className="setting-hint">Оставьте пустым для автоопределения</span>
+            </label>
+            <div className="java-input-row">
+              <input type="text" className="java-path-input" placeholder="Путь к java.exe..."
+                value={javaPath} onChange={(e) => handleJavaPathChange(e.target.value)} spellCheck={false} />
+              <button className="java-browse-btn" onClick={handleBrowseJava} title="Выбрать файл">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 3.5A1.5 1.5 0 0 1 3.5 2h2.764c.958 0 1.408 1.167.707 1.707L6.207 4.5H12.5A1.5 1.5 0 0 1 14 6v6a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12V3.5z" fill="currentColor" opacity=".8"/>
+                </svg>
               </button>
             </div>
+          </div>
 
-            {selectedSource && selectedSource.folders.length > 0 && (
-              <>
-                <div className="import-folders">
-                  <div className="import-folders-label">Что копировать:</div>
-                  <div className="import-folders-grid">
-                    {selectedSource.folders.map((folder) => (
-                      <label key={folder} className="import-folder-check">
-                        <input
-                          type="checkbox"
-                          checked={selectedFolders.includes(folder)}
-                          onChange={() => toggleFolder(folder)}
-                          disabled={importing}
-                        />
-                        <span>{FOLDER_LABELS[folder] || folder}</span>
-                      </label>
-                    ))}
-                  </div>
+          <div className="setting-box setting-ely">
+            <label className="setting-label-row">
+              <span>Аккаунт Ely.by</span>
+              <span className="setting-hint">Для доступа к лицензионным серверам</span>
+            </label>
+            {elyAccount ? (
+              <div className="ely-account-info">
+                <div className="ely-account-status">
+                  <div className="ely-username">{elyAccount.username}</div>
+                  <div className="ely-status">Подключено</div>
                 </div>
-
-                {selectedFolders.includes('mods') && (
-                  <div className="import-version-select">
-                    <div className="import-version-label">Версия Minecraft (для фильтрации модов):</div>
-                    <div className="import-version-buttons">
-                      <button
-                        className={`import-version-btn ${selectedVersion === '1.16.5' ? 'active' : ''}`}
-                        onClick={() => setSelectedVersion('1.16.5')}
-                        disabled={importing}
-                      >
-                        1.16.5
-                      </button>
-                      <button
-                        className={`import-version-btn ${selectedVersion === '1.21.11' ? 'active' : ''}`}
-                        onClick={() => setSelectedVersion('1.21.11')}
-                        disabled={importing}
-                      >
-                        1.21.11
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <button className="ely-logout-btn" onClick={handleElyLogout}>Выйти</button>
+              </div>
+            ) : (
+              <>
+                <button className="ely-login-btn" onClick={handleElyOAuthLogin} disabled={elyLoading}>
+                  {elyLoading ? 'Открываем браузер...' : 'Войти через Ely.by'}
+                </button>
+                {elyError && <div className="ely-error">{elyError}</div>}
               </>
             )}
+          </div>
 
-            {importing && (
-              <div className="import-progress-wrap">
-                <div className="import-progress-bar-bg">
-                  <div className="import-progress-bar" style={{ width: `${importProgress}%` }} />
+          <div className="setting-double">
+            <div className="setting-box">
+              <label>Папка с ресурсами</label>
+            </div>
+            <button className="setting-btn icon-font" onClick={() => window.electronAPI?.openResourcepacksFolder()}>
+              <span className="icon-font">P</span> Открыть
+            </button>
+          </div>
+
+        </div>
+      )}
+
+      {/* ── Вкладка: Дополнительно ── */}
+      {activeTab === 'extra' && (
+        <div className="settings-tab-content">
+
+          {/* Импорт данных */}
+          <div className="setting-box setting-import">
+            <label className="setting-label-row">
+              <span>Импорт данных</span>
+              <span className="setting-hint">Перенос из TLauncher / Legacy</span>
+            </label>
+            <button className="import-open-btn" onClick={openImportModal}>
+              Импортировать из другого лаунчера
+            </button>
+          </div>
+
+          {/* Модпак .kl */}
+          <div className="setting-box setting-klpack">
+            <label className="setting-label-row">
+              <span>Модпак .kl</span>
+              <span className="setting-hint">Собери моды+конфиги в файл или установи чужой</span>
+            </label>
+            <div className="kl-buttons-row">
+              <button className="import-open-btn" onClick={() => { setKlExportResultMsg(''); setKlExportModalOpen(true); }}>
+                Экспортировать сборку
+              </button>
+              <button className="import-open-btn" onClick={handlePickKlFile} disabled={klImporting}>
+                Импортировать .kl файл...
+              </button>
+            </div>
+          </div>
+
+          {/* Обновления */}
+          <div className="setting-box setting-update">
+            <label className="setting-label-row">
+              <span>Обновления</span>
+              <span className="setting-hint">Версия: {appVersion || '...'}</span>
+            </label>
+            <button className="ely-login-btn" onClick={handleCheckUpdate} disabled={updateChecking}>
+              {updateChecking ? 'Проверка...' : 'Проверить обновление'}
+            </button>
+            {updateStatusMsg && (
+              <div className={`import-result ${updateStatusMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
+                {updateStatusMsg}
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {/* ══ Модал: Импорт из лаунчера ══ */}
+      {importModalOpen && (
+        <div className="modal-overlay" onClick={() => !importing && setImportModalOpen(false)}>
+          <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Импорт данных</span>
+              <button className="modal-close-btn" onClick={() => !importing && setImportModalOpen(false)} disabled={importing}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="import-launchers">
+                {launchers.length === 0 && (
+                  <div className="import-empty">Лаунчеры не найдены автоматически</div>
+                )}
+                {launchers.map((l) => (
+                  <div
+                    key={l.path}
+                    className={`import-launcher-item ${selectedSource?.path === l.path ? 'selected' : ''}`}
+                    onClick={() => selectLauncher(l)}
+                  >
+                    <div className="import-launcher-name">{l.name}</div>
+                    <div className="import-launcher-path">{l.path}</div>
+                  </div>
+                ))}
+                <button className="import-browse-btn" onClick={handleBrowseImport}>
+                  Указать путь вручную
+                </button>
+              </div>
+
+              {selectedSource && selectedSource.folders.length > 0 && (
+                <>
+                  <div className="import-folders">
+                    <div className="import-folders-label">Что копировать:</div>
+                    <div className="import-folders-grid">
+                      {selectedSource.folders.map((folder) => (
+                        <label key={folder} className="import-folder-check">
+                          <input
+                            type="checkbox"
+                            checked={selectedFolders.includes(folder)}
+                            onChange={() => toggleFolder(folder)}
+                            disabled={importing}
+                          />
+                          <span>{FOLDER_LABELS[folder] || folder}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {selectedFolders.includes('mods') && (
+                    <div className="import-version-select">
+                      <div className="import-version-label">Версия Minecraft (для фильтрации модов):</div>
+                      <div className="import-version-buttons">
+                        <button
+                          className={`import-version-btn ${selectedVersion === '1.16.5' ? 'active' : ''}`}
+                          onClick={() => setSelectedVersion('1.16.5')}
+                          disabled={importing}
+                        >
+                          1.16.5
+                        </button>
+                        <button
+                          className={`import-version-btn ${selectedVersion === '1.21.11' ? 'active' : ''}`}
+                          onClick={() => setSelectedVersion('1.21.11')}
+                          disabled={importing}
+                        >
+                          1.21.11
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {importing && (
+                <div className="import-progress-wrap">
+                  <div className="import-progress-bar-bg">
+                    <div className="import-progress-bar" style={{ width: `${importProgress}%` }} />
+                  </div>
+                  <div className="import-progress-status">{importStatus}</div>
                 </div>
-                <div className="import-progress-status">{importStatus}</div>
-              </div>
-            )}
+              )}
 
-            {importDone && (
-              <div className={`import-result ${importStatus.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
-                {importStatus}
-              </div>
-            )}
-
-            <div className="import-actions">
-              {!importDone && (
+              {importDone && (
+                <div className={`import-result ${importStatus.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
+                  {importStatus}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              {!importDone ? (
                 <button
                   className="import-run-btn"
                   onClick={runImport}
@@ -485,161 +570,154 @@ function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: Setting
                 >
                   {importing ? 'Копирование...' : 'Импортировать'}
                 </button>
-              )}
-              <button className="import-cancel-btn" onClick={() => setImportOpen(false)} disabled={importing}>
+              ) : null}
+              <button
+                className="import-cancel-btn"
+                onClick={() => setImportModalOpen(false)}
+                disabled={importing}
+              >
                 {importDone ? 'Закрыть' : 'Отмена'}
               </button>
             </div>
           </div>
-        )}
-      </div>
-
-      <div className="setting-double">
-        <div className="setting-box">
-          <label>Папка с ресурсами</label>
         </div>
-        <button className="setting-btn icon-font" onClick={() => window.electronAPI?.openResourcepacksFolder()}>
-          <span className="icon-font">P</span> Открыть
-        </button>
-      </div>
+      )}
 
-      <div className="setting-box setting-klpack">
-        <label className="setting-label-row">
-          <span>Модпак .kl</span>
-          <span className="setting-hint">Собери текущие моды+конфиги в файл или установи чужой</span>
-        </label>
-
-        {/* Экспорт */}
-        <button className="import-open-btn" onClick={() => setKlExportOpen((v) => !v)}>
-          {klExportOpen ? 'Скрыть экспорт' : 'Экспортировать текущую сборку'}
-        </button>
-        {klExportOpen && (
-          <div className="import-panel">
-            <input
-              type="text"
-              className="java-path-input"
-              placeholder="Название сборки"
-              value={klPackName}
-              onChange={(e) => setKlPackName(e.target.value)}
-              spellCheck={false}
-              style={{ marginBottom: '10px' }}
-            />
-            <div className="import-version-select">
-              <div className="import-version-label">Версия Minecraft:</div>
-              <div className="import-version-buttons">
-                <button
-                  className={`import-version-btn ${klPackVersion === '1.16.5' ? 'active' : ''}`}
-                  onClick={() => setKlPackVersion('1.16.5')}
-                  disabled={klExporting}
-                >
-                  1.16.5
-                </button>
-                <button
-                  className={`import-version-btn ${klPackVersion === '1.21.11' ? 'active' : ''}`}
-                  onClick={() => setKlPackVersion('1.21.11')}
-                  disabled={klExporting}
-                >
-                  1.21.11
-                </button>
-              </div>
+      {/* ══ Модал: Экспорт .kl ══ */}
+      {klExportModalOpen && (
+        <div className="modal-overlay" onClick={() => !klExporting && setKlExportModalOpen(false)}>
+          <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Экспорт модпака .kl</span>
+              <button className="modal-close-btn" onClick={() => !klExporting && setKlExportModalOpen(false)} disabled={klExporting}>✕</button>
             </div>
-
-            {klExporting && (
-              <div className="import-progress-wrap">
-                <div className="import-progress-bar-bg">
-                  <div className="import-progress-bar" style={{ width: `${klExportProgress}%` }} />
+            <div className="modal-body">
+              <div className="import-version-label" style={{ marginBottom: '6px' }}>Название сборки:</div>
+              <input
+                type="text"
+                className="java-path-input"
+                placeholder="Название сборки"
+                value={klPackName}
+                onChange={(e) => setKlPackName(e.target.value)}
+                spellCheck={false}
+                style={{ marginBottom: '16px' }}
+              />
+              <div className="import-version-select">
+                <div className="import-version-label">Версия Minecraft:</div>
+                <div className="import-version-buttons">
+                  <button
+                    className={`import-version-btn ${klPackVersion === '1.16.5' ? 'active' : ''}`}
+                    onClick={() => setKlPackVersion('1.16.5')}
+                    disabled={klExporting}
+                  >
+                    1.16.5
+                  </button>
+                  <button
+                    className={`import-version-btn ${klPackVersion === '1.21.11' ? 'active' : ''}`}
+                    onClick={() => setKlPackVersion('1.21.11')}
+                    disabled={klExporting}
+                  >
+                    1.21.11
+                  </button>
                 </div>
-                <div className="import-progress-status">{klExportStatus}</div>
               </div>
-            )}
 
-            {klExportResultMsg && (
-              <div className={`import-result ${klExportResultMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
-                {klExportResultMsg}
-              </div>
-            )}
+              {klExporting && (
+                <div className="import-progress-wrap" style={{ marginTop: '16px' }}>
+                  <div className="import-progress-bar-bg">
+                    <div className="import-progress-bar" style={{ width: `${klExportProgress}%` }} />
+                  </div>
+                  <div className="import-progress-status">{klExportStatus}</div>
+                </div>
+              )}
 
-            <div className="import-actions">
+              {klExportResultMsg && (
+                <div className={`import-result ${klExportResultMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`} style={{ marginTop: '12px' }}>
+                  {klExportResultMsg}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
               <button className="import-run-btn" onClick={handleExportKl} disabled={klExporting}>
                 {klExporting ? 'Собираем...' : 'Сохранить .kl'}
               </button>
+              <button className="import-cancel-btn" onClick={() => setKlExportModalOpen(false)} disabled={klExporting}>
+                Закрыть
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Импорт */}
-        <div style={{ marginTop: '14px' }}>
-          <button className="import-open-btn" onClick={handlePickKlFile} disabled={klImporting}>
-            Импортировать .kl файл...
-          </button>
         </div>
+      )}
 
-        {klPreviewError && (
-          <div className="import-result import-result-error">{klPreviewError}</div>
-        )}
-
-        {klManifest && (
-          <div className="import-panel">
-            <div className="ely-account-info" style={{ marginBottom: '10px' }}>
-              <div className="ely-account-status">
-                <div className="ely-username">{klManifest.name}</div>
-                <div className="ely-status">
-                  {klManifest.mcVersion} · {klManifest.mods.length} модов
-                  {klManifest.author ? ` · автор: ${klManifest.author}` : ''}
-                </div>
-              </div>
+      {/* ══ Модал: Импорт .kl ══ */}
+      {klImportModalOpen && (
+        <div className="modal-overlay" onClick={() => !klImporting && setKlImportModalOpen(false)}>
+          <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Установка модпака .kl</span>
+              <button className="modal-close-btn" onClick={() => !klImporting && setKlImportModalOpen(false)} disabled={klImporting}>✕</button>
             </div>
-            <div className="setting-hint" style={{ marginBottom: '10px' }}>
-              Текущие моды и конфиги под {klManifest.mcVersion} будут заменены на те, что в этом модпаке.
-            </div>
+            <div className="modal-body">
+              {klPreviewError && (
+                <div className="import-result import-result-error">{klPreviewError}</div>
+              )}
 
-            {klImporting && (
-              <div className="import-progress-wrap">
-                <div className="import-progress-bar-bg">
-                  <div className="import-progress-bar" style={{ width: `${klImportProgress}%` }} />
+              {klManifest && (
+                <>
+                  <div className="ely-account-info" style={{ marginBottom: '12px' }}>
+                    <div className="ely-account-status">
+                      <div className="ely-username">{klManifest.name}</div>
+                      <div className="ely-status">
+                        {klManifest.mcVersion} · {klManifest.mods.length} модов
+                        {klManifest.author ? ` · автор: ${klManifest.author}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="setting-hint">
+                    Текущие моды и конфиги под {klManifest.mcVersion} будут заменены на те, что в этом модпаке.
+                  </div>
+                </>
+              )}
+
+              {klImporting && (
+                <div className="import-progress-wrap" style={{ marginTop: '16px' }}>
+                  <div className="import-progress-bar-bg">
+                    <div className="import-progress-bar" style={{ width: `${klImportProgress}%` }} />
+                  </div>
+                  <div className="import-progress-status">{klImportStatus}</div>
                 </div>
-                <div className="import-progress-status">{klImportStatus}</div>
-              </div>
-            )}
+              )}
 
-            {klImportResultMsg && (
-              <div className={`import-result ${klImportResultMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
-                {klImportResultMsg}
-              </div>
-            )}
-
-            <div className="import-actions">
-              <button className="import-run-btn" onClick={handleConfirmKlImport} disabled={klImporting}>
-                {klImporting ? 'Устанавливаем...' : 'Установить'}
-              </button>
+              {klImportResultMsg && (
+                <div className={`import-result ${klImportResultMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`} style={{ marginTop: '12px' }}>
+                  {klImportResultMsg}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              {klManifest && !klImportResultMsg && (
+                <button className="import-run-btn" onClick={handleConfirmKlImport} disabled={klImporting}>
+                  {klImporting ? 'Устанавливаем...' : 'Установить'}
+                </button>
+              )}
               <button
                 className="import-cancel-btn"
-                onClick={() => { setKlManifest(null); setKlImportPath(null); }}
+                onClick={() => {
+                  setKlImportModalOpen(false);
+                  setKlManifest(null);
+                  setKlImportPath(null);
+                  setKlPreviewError('');
+                  setKlImportResultMsg('');
+                }}
                 disabled={klImporting}
               >
-                Отмена
+                {klImportResultMsg ? 'Закрыть' : 'Отмена'}
               </button>
             </div>
           </div>
-        )}
-      </div>
-
-      <div className="setting-box setting-update">
-        <label className="setting-label-row">
-          <span>Обновления</span>
-          <span className="setting-hint">Версия: {appVersion || '...'}</span>
-        </label>
-        <div className="java-input-row">
-          <button className="ely-login-btn" onClick={handleCheckUpdate} disabled={updateChecking}>
-            {updateChecking ? 'Проверка...' : 'Проверить обновление'}
-          </button>
         </div>
-        {updateStatusMsg && (
-          <div className={`import-result ${updateStatusMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
-            {updateStatusMsg}
-          </div>
-        )}
-      </div>
+      )}
+
     </div>
   );
 }
