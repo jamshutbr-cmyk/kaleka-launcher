@@ -18,7 +18,10 @@ publish:
 win:
   target:
     - nsis
-  artifactName: ${productName}-Setup-${version}.${ext}
+  # Без пробелов в имени файла! GitHub при загрузке ассета переименовывает
+  # пробелы (в дефис/точку), а latest.yml продолжает ссылаться на исходное
+  # имя со пробелом -> electron-updater качает несуществующий файл -> 404.
+  artifactName: Kaleka-Launcher-Setup-${version}.${ext}
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

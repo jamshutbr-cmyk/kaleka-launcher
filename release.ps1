@@ -82,8 +82,8 @@ if (-not $ghExists) {
     exit 1
 }
 
-$exeFile    = "release\Kaleka Launcher-Setup-$releaseVersion.exe"
-$blockmapFile = "release\Kaleka Launcher-Setup-$releaseVersion.exe.blockmap"
+$exeFile    = "release\Kaleka-Launcher-Setup-$releaseVersion.exe"
+$blockmapFile = "release\Kaleka-Launcher-Setup-$releaseVersion.exe.blockmap"
 $ymlFile    = "release\latest.yml"
 
 gh release create "v$releaseVersion" $exeFile $blockmapFile $ymlFile `
