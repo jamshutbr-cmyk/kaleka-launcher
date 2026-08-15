@@ -13,7 +13,7 @@ extraResources:
     to: assets
 publish:
   provider: github
-  owner: llovap
+  owner: jamshutbr-cmyk
   repo: kaleka-launcher
 win:
   target:
