@@ -5,8 +5,8 @@
   min-width: 300px;
   max-width: 380px;
   padding: 14px 16px;
-  background: color-mix(in srgb, var(--accent-color) 18%, var(--input-bg-color));
-  border: 1px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
+  background: var(--input-bg-color);
+  border: 1px solid var(--text-color-grayed-24);
   border-radius: var(--border-radius-sm);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
@@ -32,8 +32,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--accent-color);
-  color: black;
+  background: var(--text-color-grayed-24);
+  color: var(--text-color);
   font-family: SFBold;
   font-size: 16px;
   display: flex;
@@ -71,14 +71,14 @@
 
 .update-toast-bar-fill {
   height: 100%;
-  background: var(--accent-color);
+  background: var(--text-color);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
 
 .update-toast-btn {
   padding: 8px 14px;
-  background: var(--accent-color);
+  background: var(--text-color);
   border: none;
   border-radius: calc(var(--border-radius-sm) - 2px);
   color: black;
