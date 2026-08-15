@@ -66,4 +66,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onUpdaterProgress: (cb: (p: { percent: number }) => void) => ipcRenderer.on('updater:progress', (_e, p) => cb(p)),
   onUpdaterDownloaded: (cb: (info: { version: string }) => void) => ipcRenderer.on('updater:downloaded', (_e, info) => cb(info)),
   onUpdaterError: (cb: (msg: string) => void) => ipcRenderer.on('updater:error', (_e, msg) => cb(msg)),
+
+  // .kl modpacks
+  klExport: (options: { mcVersion: string; name: string; author?: string }) =>
+    ipcRenderer.invoke('klpack:export', options),
+  klPickFile: () => ipcRenderer.invoke('klpack:pick-file'),
+  klPreview: (klPath: string) => ipcRenderer.invoke('klpack:preview', klPath),
+  klImport: (klPath: string) => ipcRenderer.invoke('klpack:import', klPath),
+  klGetPending: () => ipcRenderer.invoke('klpack:get-pending'),
+  onKlExportProgress: (cb: (p: { status: string; percent: number }) => void) =>
+    ipcRenderer.on('klpack:export-progress', (_e, p) => cb(p)),
+  onKlImportProgress: (cb: (p: { status: string; percent: number }) => void) =>
+    ipcRenderer.on('klpack:import-progress', (_e, p) => cb(p)),
+  onKlPending: (cb: (klPath: string) => void) => ipcRenderer.on('klpack:pending', (_e, p) => cb(p)),
 });

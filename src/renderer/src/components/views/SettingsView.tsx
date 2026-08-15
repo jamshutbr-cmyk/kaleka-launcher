@@ -11,6 +11,23 @@ interface ElyAccount {
 interface SettingsViewProps {
   elyAccount: ElyAccount | null;
   onElyAccountChange: (account: ElyAccount | null) => void;
+  pendingKlPath?: string | null;
+}
+
+interface KlModEntry {
+  fileName: string;
+  name: string;
+  sha1: string;
+  size: number;
+  downloadUrl?: string;
+  embedded: boolean;
+}
+
+interface KlManifest {
+  name: string;
+  author?: string;
+  mcVersion: string;
+  mods: KlModEntry[];
 }
 
 interface LauncherInstall {
@@ -48,11 +65,17 @@ declare global {
       onUpdaterAvailable: (cb: (info: { version: string }) => void) => void;
       onUpdaterNotAvailable: (cb: () => void) => void;
       onUpdaterError: (cb: (msg: string) => void) => void;
+      klExport: (options: { mcVersion: string; name: string; author?: string }) => Promise<any>;
+      klPickFile: () => Promise<string | null>;
+      klPreview: (klPath: string) => Promise<{ success: boolean; manifest?: KlManifest; error?: string }>;
+      klImport: (klPath: string) => Promise<any>;
+      onKlExportProgress: (cb: (p: { status: string; percent: number }) => void) => void;
+      onKlImportProgress: (cb: (p: { status: string; percent: number }) => void) => void;
     };
   }
 }
 
-function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
+function SettingsView({ elyAccount, onElyAccountChange, pendingKlPath }: SettingsViewProps) {
   const [ram, setRam] = useState(4096);
   const [maxRam, setMaxRam] = useState(16384);
   const [javaPath, setJavaPath] = useState('');
@@ -63,6 +86,24 @@ function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
   const [appVersion, setAppVersion] = useState('');
   const [updateChecking, setUpdateChecking] = useState(false);
   const [updateStatusMsg, setUpdateStatusMsg] = useState('');
+
+  // .kl modpack — export
+  const [klExportOpen, setKlExportOpen] = useState(false);
+  const [klPackName, setKlPackName] = useState('Моя сборка');
+  const [klPackVersion, setKlPackVersion] = useState<'1.16.5' | '1.21.11'>('1.21.11');
+  const [klExporting, setKlExporting] = useState(false);
+  const [klExportProgress, setKlExportProgress] = useState(0);
+  const [klExportStatus, setKlExportStatus] = useState('');
+  const [klExportResultMsg, setKlExportResultMsg] = useState('');
+
+  // .kl modpack — import
+  const [klImportPath, setKlImportPath] = useState<string | null>(null);
+  const [klManifest, setKlManifest] = useState<KlManifest | null>(null);
+  const [klPreviewError, setKlPreviewError] = useState('');
+  const [klImporting, setKlImporting] = useState(false);
+  const [klImportProgress, setKlImportProgress] = useState(0);
+  const [klImportStatus, setKlImportStatus] = useState('');
+  const [klImportResultMsg, setKlImportResultMsg] = useState('');
 
   // Import state
   const [importOpen, setImportOpen] = useState(false);
@@ -110,6 +151,77 @@ function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
       setUpdateStatusMsg(`Ошибка проверки обновления: ${msg}`);
     });
   }, []);
+
+  // Подписка на прогресс экспорта/импорта .kl
+  useEffect(() => {
+    window.electronAPI?.onKlExportProgress?.((p) => {
+      setKlExportProgress(p.percent);
+      setKlExportStatus(p.status);
+    });
+    window.electronAPI?.onKlImportProgress?.((p) => {
+      setKlImportProgress(p.percent);
+      setKlImportStatus(p.status);
+    });
+  }, []);
+
+  // Лаунчер открыт двойным кликом по .kl файлу — сразу показываем превью
+  useEffect(() => {
+    if (pendingKlPath) {
+      previewKlFile(pendingKlPath);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingKlPath]);
+
+  const previewKlFile = async (filePath: string) => {
+    setKlImportPath(filePath);
+    setKlManifest(null);
+    setKlPreviewError('');
+    setKlImportResultMsg('');
+    const res = await window.electronAPI?.klPreview?.(filePath);
+    if (res?.success && res.manifest) {
+      setKlManifest(res.manifest);
+    } else {
+      setKlPreviewError(res?.error || 'Не удалось прочитать модпак');
+    }
+  };
+
+  const handlePickKlFile = async () => {
+    const filePath = await window.electronAPI?.klPickFile?.();
+    if (filePath) await previewKlFile(filePath);
+  };
+
+  const handleConfirmKlImport = async () => {
+    if (!klImportPath) return;
+    setKlImporting(true);
+    setKlImportProgress(0);
+    setKlImportResultMsg('');
+    const res = await window.electronAPI?.klImport?.(klImportPath);
+    setKlImporting(false);
+    if (res?.success) {
+      setKlImportResultMsg(`Готово: установлено модов — ${res.modsInstalled} (скачано ${res.modsDownloaded}, из архива ${res.modsEmbedded})`);
+      setKlManifest(null);
+      setKlImportPath(null);
+    } else {
+      setKlImportResultMsg(`Ошибка: ${res?.error || 'не удалось установить модпак'}`);
+    }
+  };
+
+  const handleExportKl = async () => {
+    setKlExporting(true);
+    setKlExportProgress(0);
+    setKlExportResultMsg('');
+    const res = await window.electronAPI?.klExport?.({
+      mcVersion: klPackVersion,
+      name: klPackName.trim() || 'modpack',
+    });
+    setKlExporting(false);
+    if (res?.canceled) return;
+    if (res?.success) {
+      setKlExportResultMsg(`Сохранено: ${res.outPath}`);
+    } else {
+      setKlExportResultMsg(`Ошибка: ${res?.error || 'не удалось создать модпак'}`);
+    }
+  };
 
   const handleCheckUpdate = () => {
     setUpdateChecking(true);
@@ -389,6 +501,127 @@ function SettingsView({ elyAccount, onElyAccountChange }: SettingsViewProps) {
         <button className="setting-btn icon-font" onClick={() => window.electronAPI?.openResourcepacksFolder()}>
           <span className="icon-font">P</span> Открыть
         </button>
+      </div>
+
+      <div className="setting-box setting-klpack">
+        <label className="setting-label-row">
+          <span>Модпак .kl</span>
+          <span className="setting-hint">Собери текущие моды+конфиги в файл или установи чужой</span>
+        </label>
+
+        {/* Экспорт */}
+        <button className="import-open-btn" onClick={() => setKlExportOpen((v) => !v)}>
+          {klExportOpen ? 'Скрыть экспорт' : 'Экспортировать текущую сборку'}
+        </button>
+        {klExportOpen && (
+          <div className="import-panel">
+            <input
+              type="text"
+              className="java-path-input"
+              placeholder="Название сборки"
+              value={klPackName}
+              onChange={(e) => setKlPackName(e.target.value)}
+              spellCheck={false}
+              style={{ marginBottom: '10px' }}
+            />
+            <div className="import-version-select">
+              <div className="import-version-label">Версия Minecraft:</div>
+              <div className="import-version-buttons">
+                <button
+                  className={`import-version-btn ${klPackVersion === '1.16.5' ? 'active' : ''}`}
+                  onClick={() => setKlPackVersion('1.16.5')}
+                  disabled={klExporting}
+                >
+                  1.16.5
+                </button>
+                <button
+                  className={`import-version-btn ${klPackVersion === '1.21.11' ? 'active' : ''}`}
+                  onClick={() => setKlPackVersion('1.21.11')}
+                  disabled={klExporting}
+                >
+                  1.21.11
+                </button>
+              </div>
+            </div>
+
+            {klExporting && (
+              <div className="import-progress-wrap">
+                <div className="import-progress-bar-bg">
+                  <div className="import-progress-bar" style={{ width: `${klExportProgress}%` }} />
+                </div>
+                <div className="import-progress-status">{klExportStatus}</div>
+              </div>
+            )}
+
+            {klExportResultMsg && (
+              <div className={`import-result ${klExportResultMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
+                {klExportResultMsg}
+              </div>
+            )}
+
+            <div className="import-actions">
+              <button className="import-run-btn" onClick={handleExportKl} disabled={klExporting}>
+                {klExporting ? 'Собираем...' : 'Сохранить .kl'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Импорт */}
+        <div style={{ marginTop: '14px' }}>
+          <button className="import-open-btn" onClick={handlePickKlFile} disabled={klImporting}>
+            Импортировать .kl файл...
+          </button>
+        </div>
+
+        {klPreviewError && (
+          <div className="import-result import-result-error">{klPreviewError}</div>
+        )}
+
+        {klManifest && (
+          <div className="import-panel">
+            <div className="ely-account-info" style={{ marginBottom: '10px' }}>
+              <div className="ely-account-status">
+                <div className="ely-username">{klManifest.name}</div>
+                <div className="ely-status">
+                  {klManifest.mcVersion} · {klManifest.mods.length} модов
+                  {klManifest.author ? ` · автор: ${klManifest.author}` : ''}
+                </div>
+              </div>
+            </div>
+            <div className="setting-hint" style={{ marginBottom: '10px' }}>
+              Текущие моды и конфиги под {klManifest.mcVersion} будут заменены на те, что в этом модпаке.
+            </div>
+
+            {klImporting && (
+              <div className="import-progress-wrap">
+                <div className="import-progress-bar-bg">
+                  <div className="import-progress-bar" style={{ width: `${klImportProgress}%` }} />
+                </div>
+                <div className="import-progress-status">{klImportStatus}</div>
+              </div>
+            )}
+
+            {klImportResultMsg && (
+              <div className={`import-result ${klImportResultMsg.startsWith('Ошибка') ? 'import-result-error' : ''}`}>
+                {klImportResultMsg}
+              </div>
+            )}
+
+            <div className="import-actions">
+              <button className="import-run-btn" onClick={handleConfirmKlImport} disabled={klImporting}>
+                {klImporting ? 'Устанавливаем...' : 'Установить'}
+              </button>
+              <button
+                className="import-cancel-btn"
+                onClick={() => { setKlManifest(null); setKlImportPath(null); }}
+                disabled={klImporting}
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="setting-box setting-update">

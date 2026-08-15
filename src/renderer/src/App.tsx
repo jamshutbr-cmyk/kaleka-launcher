@@ -20,6 +20,7 @@ function AppInner() {
     localStorage.getItem('username') || 'Steve'
   );
   const [elyAccount, setElyAccount] = useState<ElyAccount | null>(null);
+  const [pendingKlPath, setPendingKlPath] = useState<string | null>(null);
 
   useEffect(() => {
     const savedAccount = localStorage.getItem('elyAccount');
@@ -32,6 +33,20 @@ function AppInner() {
         console.error('Failed to parse saved account:', e);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    // Лаунчер мог быть запущен двойным кликом по .kl файлу
+    window.electronAPI?.klGetPending?.().then((p: string | null) => {
+      if (p) {
+        setPendingKlPath(p);
+        setCurrentView('settings');
+      }
+    });
+    window.electronAPI?.onKlPending?.((p: string) => {
+      setPendingKlPath(p);
+      setCurrentView('settings');
+    });
   }, []);
 
   const handleUsernameChange = (val: string) => {
@@ -67,6 +82,7 @@ function AppInner() {
           username={username}
           elyAccount={elyAccount}
           onElyAccountChange={handleElyAccountChange}
+          pendingKlPath={pendingKlPath}
         />
       </div>
       <UpdateToast />

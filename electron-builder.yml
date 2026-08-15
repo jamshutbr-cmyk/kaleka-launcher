@@ -1,6 +1,11 @@
 appId: com.kaleka.launcher
 productName: Kaleka Launcher
 executableName: Kaleka
+fileAssociations:
+  - ext: kl
+    name: Kaleka Modpack
+    description: Kaleka Launcher Modpack
+    role: Editor
 directories:
   output: release
   buildResources: build

@@ -17,9 +17,10 @@ interface MainContentProps {
   username: string;
   elyAccount: ElyAccount | null;
   onElyAccountChange: (account: ElyAccount | null) => void;
+  pendingKlPath?: string | null;
 }
 
-function MainContent({ currentView, username, elyAccount, onElyAccountChange }: MainContentProps) {
+function MainContent({ currentView, username, elyAccount, onElyAccountChange, pendingKlPath }: MainContentProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayedView, setDisplayedView] = useState(currentView);
 
@@ -44,7 +45,7 @@ function MainContent({ currentView, username, elyAccount, onElyAccountChange }: 
       case 'browse':
         return <BrowseView />;
       case 'settings':
-        return <SettingsView elyAccount={elyAccount} onElyAccountChange={onElyAccountChange} />;
+        return <SettingsView elyAccount={elyAccount} onElyAccountChange={onElyAccountChange} pendingKlPath={pendingKlPath} />;
       default:
         return <HomeView username={username} elyAccount={elyAccount} />;
     }

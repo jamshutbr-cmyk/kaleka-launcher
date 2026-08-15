@@ -467,3 +467,90 @@ ipcMain.handle('mods:delete', async (_event, modPath: string) => {
   }
 });
 
+// .kl modpack export/import
+import { exportKlPack, importKlPack, readKlManifest } from './minecraft/KlPack';
+
+ipcMain.handle('klpack:export', async (event, options: { mcVersion: string; name: string; author?: string }) => {
+  const result = await dialog.showSaveDialog({
+    title: 'Экспорт модпака',
+    defaultPath: `${options.name || 'modpack'}.kl`,
+    filters: [{ name: 'Kaleka Modpack', extensions: ['kl'] }],
+  });
+  if (result.canceled || !result.filePath) return { success: false, canceled: true };
+
+  try {
+    await exportKlPack(
+      { ...options, outPath: result.filePath },
+      (status, percent) => event.sender.send('klpack:export-progress', { status, percent })
+    );
+    return { success: true, outPath: result.filePath };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('klpack:pick-file', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Выберите .kl модпак',
+    properties: ['openFile'],
+    filters: [{ name: 'Kaleka Modpack', extensions: ['kl'] }],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
+ipcMain.handle('klpack:preview', async (_event, klPath: string) => {
+  try {
+    const manifest = readKlManifest(klPath);
+    return { success: true, manifest };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('klpack:import', async (event, klPath: string) => {
+  try {
+    const result = await importKlPack(klPath, (status, percent) => {
+      event.sender.send('klpack:import-progress', { status, percent });
+    });
+    return { success: true, ...result };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Открытие лаунчера двойным кликом по .kl файлу (file association)
+let pendingKlPath: string | null = process.argv.find((a) => a.endsWith('.kl')) || null;
+
+ipcMain.handle('klpack:get-pending', () => {
+  const p = pendingKlPath;
+  pendingKlPath = null;
+  return p;
+});
+
+app.on('open-file', (event, filePath) => {
+  // macOS
+  event.preventDefault();
+  if (filePath.endsWith('.kl')) {
+    pendingKlPath = filePath;
+    mainWindow?.webContents.send('klpack:pending', filePath);
+  }
+});
+
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv) => {
+    const klArg = argv.find((a) => a.endsWith('.kl'));
+    if (klArg) {
+      pendingKlPath = klArg;
+      mainWindow?.webContents.send('klpack:pending', klArg);
+    }
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+

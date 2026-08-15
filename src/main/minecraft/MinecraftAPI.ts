@@ -40,7 +40,7 @@ function httpsGet(url: string): Promise<any> {
   });
 }
 
-function downloadFile(url: string, dest: string, onProgress?: (percent: number) => void): Promise<void> {
+export function downloadFile(url: string, dest: string, onProgress?: (percent: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const dir = path.dirname(dest);
     try {
