@@ -1,0 +1,303 @@
+.home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+}
+
+.versions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.version-card {
+  position: relative;
+  flex-grow: 1;
+  height: 188px;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: height 0.3s ease;
+}
+
+.version-card.logs-expanded {
+  height: 388px;
+}
+
+.version-card:first-child {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.version-card:nth-child(n+2) {
+  flex-basis: calc(33.333% - 6px);
+  min-width: 200px;
+}
+
+.version-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 188px;
+  object-fit: cover;
+  filter: saturate(30%) brightness(0.55) grayscale(1);
+  transition: var(--transition);
+}
+
+.version-card:hover .version-image {
+  filter: saturate(40%) brightness(0.65);
+}
+
+.version-content {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  pointer-events: none;
+  z-index: 10;
+  transition: bottom 0.3s ease;
+}
+
+.version-card.logs-expanded .version-content {
+  bottom: calc(200px + 10px);
+}
+
+.version-title {
+  font-size: 15px;
+  font-family: SFBold;
+  margin-bottom: 2px;
+}
+
+.version-subtitle {
+  font-size: 12.5px;
+  color: var(--text-color-grayed);
+}
+
+/* Play + log buttons row */
+.version-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1001;
+  pointer-events: auto;
+  transition: bottom 0.3s ease;
+}
+
+.version-card.logs-expanded .version-actions {
+  bottom: calc(200px + 10px);
+}
+
+.version-play {
+  width: 35px;
+  height: 35px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: color-mix(in srgb, var(--accent-color-mixed) 15%, rgba(78, 78, 78, 0.63));
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.version-play:hover {
+  background-color: color-mix(in srgb, var(--accent-color-mixed) 25%, rgba(78, 78, 78, 0.63));
+}
+
+.version-play svg {
+  width: 12px;
+  height: 12px;
+  fill: white;
+  margin-left: 2px;
+}
+
+.version-log-btn {
+  width: 35px;
+  height: 35px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(20, 20, 20, 0.7);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.version-log-btn:hover {
+  background-color: rgba(45, 45, 45, 0.85);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Downloading state */
+.version-downloading {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 200px;
+  z-index: 1001;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.download-spinner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner-icon {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-color-mixed);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.download-progress {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color) 0%, color-mix(in srgb, var(--accent-color), white 30%) 100%);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.download-status {
+  font-size: 11px;
+  color: var(--text-color-grayed);
+  text-align: right;
+  font-family: SFRegular;
+}
+
+/* Log panel */
+.version-log-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: color-mix(in srgb, var(--input-bg-color) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-color);
+  padding: 8px 10px;
+  overflow-y: auto;
+  z-index: 100;
+  font-size: 10.5px;
+  font-family: 'Courier New', monospace;
+  line-height: 1.55;
+}
+
+.version-log-panel::-webkit-scrollbar {
+  width: 3px;
+}
+
+.version-log-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.version-log-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.log-empty {
+  color: var(--text-color-grayed-24);
+  text-align: center;
+  padding: 20px 0;
+  font-size: 11px;
+  font-family: SFRegular;
+}
+
+.log-line {
+  padding: 0.5px 0;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.log-default { color: rgba(180, 185, 195, 0.7); }
+.log-info    { color: rgba(100, 210, 130, 0.9); }
+.log-warn    { color: rgba(240, 190, 80, 0.88); }
+.log-error   { color: rgba(240, 90, 90, 0.92); }
+
+.log-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 2px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 4px;
+}
+
+.log-panel-title {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  font-family: SFRegular;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.log-copy-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  transition: var(--transition);
+  font-size: 10px;
+}
+
+.log-copy-btn:hover {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.06);
+}
+
+.log-panel-content {
+  overflow-y: auto;
+  height: calc(100% - 28px);
+}
+
+.log-panel-content::-webkit-scrollbar {
+  width: 3px;
+}
+
+.log-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.log-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}

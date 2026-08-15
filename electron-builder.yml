@@ -1,0 +1,35 @@
+appId: com.kaleka.launcher
+productName: Kaleka Launcher
+executableName: Kaleka
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - src/renderer/public/**/*
+  - package.json
+extraResources:
+  - from: src/renderer/public/assets
+    to: assets
+publish:
+  provider: github
+  owner: llovap
+  repo: kaleka-launcher
+win:
+  target:
+    - nsis
+  artifactName: ${productName}-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Kaleka
+mac:
+  target:
+    - dmg
+  category: public.app-category.games
+linux:
+  target:
+    - AppImage
+  category: Game

@@ -1,0 +1,520 @@
+.settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-box {
+  padding: calc(var(--padding-md) + 4px);
+  border-radius: var(--border-radius-sm);
+  background: var(--input-bg-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-ram {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-ram label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.ram-value {
+  font-family: SFBold;
+}
+
+input[type="range"] {
+  margin-top: 5px;
+  width: 100%;
+  -webkit-appearance: none;
+  background: transparent;
+  outline: none;
+  height: 5px;
+  border-radius: var(--border-radius-lg);
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--accent-color-mixed);
+  border: 2px solid var(--input-bg-color);
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+  transform: scale(1.2) translateY(-32.5%);
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.4) translateY(-32.5%);
+}
+
+.setting-double {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.setting-double .setting-box {
+  flex: 1;
+}
+
+.setting-double button {
+  width: 155px;
+  height: 50px;
+  border-radius: var(--border-radius-sm);
+  background: color-mix(in srgb, var(--accent-color), #9b9b9b 40%);
+  border: 1px solid var(--accent-color-mixed);
+  color: black;
+  font-family: SFBold;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.setting-double button:hover {
+  filter: brightness(0.85);
+}
+
+.setting-java {
+  gap: 10px;
+}
+
+.setting-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.setting-hint {
+  font-size: 11px;
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+}
+
+.java-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.java-path-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-color);
+  font-size: 12px;
+  font-family: SFRegular;
+  padding: 8px 10px;
+  outline: none;
+  transition: var(--transition);
+}
+
+.java-path-input:focus {
+  border-color: var(--accent-color-mixed);
+  background: rgba(255,255,255,0.07);
+}
+
+.java-path-input::placeholder {
+  color: var(--text-color-grayed);
+}
+
+.java-browse-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--border-radius-sm);
+  background: var(--input-bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.java-browse-btn:hover {
+  background: color-mix(in srgb, var(--accent-color-mixed), transparent 70%);
+  border-color: var(--accent-color-mixed);
+}
+
+/* Ely.by Account Section */
+.setting-ely {
+  gap: 12px;
+}
+
+.ely-account-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: color-mix(in srgb, #4CAF50 8%, var(--input-bg-color));
+  border: 1px solid color-mix(in srgb, #4CAF50 20%, transparent);
+  border-radius: var(--border-radius-sm);
+}
+
+.ely-account-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ely-username {
+  font-family: SFBold;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.ely-status {
+  font-size: 11px;
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+}
+
+.ely-logout-btn {
+  background: color-mix(in srgb, #ff3b30 15%, var(--input-bg-color));
+  border: 1px solid color-mix(in srgb, #ff3b30 30%, transparent);
+  color: #ff6b6b;
+  border-radius: var(--border-radius-sm);
+  padding: 7px 16px;
+  font-size: 13px;
+  font-family: SFBold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.ely-logout-btn:hover {
+  background: color-mix(in srgb, #ff3b30 25%, var(--input-bg-color));
+  border-color: color-mix(in srgb, #ff3b30 40%, transparent);
+}
+
+.ely-login-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--accent-color), #9b9b9b 40%);
+  border: 1px solid var(--accent-color-mixed);
+  border-radius: var(--border-radius-sm);
+  color: black;
+  font-family: SFBold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.ely-login-btn:hover:not(:disabled) {
+  filter: brightness(0.85);
+}
+
+.ely-login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ely-error {
+  background: color-mix(in srgb, #ff3b30 10%, var(--input-bg-color));
+  border: 1px solid color-mix(in srgb, #ff3b30 25%, transparent);
+  border-radius: var(--border-radius-sm);
+  padding: 8px 12px;
+  color: #ff6b6b;
+  font-size: 12px;
+  text-align: center;
+  font-family: SFRegular;
+}
+
+/* Import Section */
+.setting-import {
+  gap: 12px;
+}
+
+.import-open-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--input-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-color);
+  font-family: SFBold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.import-open-btn:hover {
+  border-color: var(--accent-color-mixed);
+  background: color-mix(in srgb, var(--accent-color-mixed), var(--input-bg-color) 85%);
+}
+
+.import-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-launchers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.import-empty {
+  font-size: 12px;
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+  padding: 4px 0;
+}
+
+.import-launcher-item {
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.import-launcher-item:hover {
+  border-color: var(--accent-color-mixed);
+  background: color-mix(in srgb, var(--accent-color-mixed), transparent 88%);
+}
+
+.import-launcher-item.selected {
+  border-color: var(--accent-color-mixed);
+  background: color-mix(in srgb, var(--accent-color-mixed), var(--input-bg-color) 80%);
+}
+
+.import-launcher-name {
+  font-family: SFBold;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.import-launcher-path {
+  font-family: SFRegular;
+  font-size: 11px;
+  color: var(--text-color-grayed);
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.import-browse-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.import-browse-btn:hover {
+  border-color: var(--accent-color-mixed);
+  color: var(--text-color);
+}
+
+.import-folders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import-folders-label {
+  font-size: 12px;
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+}
+
+.import-folders-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.import-folder-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 13px;
+  font-family: SFRegular;
+  color: var(--text-color);
+  transition: var(--transition);
+  user-select: none;
+}
+
+.import-folder-check:has(input:checked) {
+  border-color: var(--accent-color-mixed);
+  background: color-mix(in srgb, var(--accent-color-mixed), transparent 85%);
+}
+
+.import-folder-check input[type="checkbox"] {
+  accent-color: var(--accent-color);
+  width: 14px;
+  height: 14px;
+}
+
+.import-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.import-progress-bar-bg {
+  height: 5px;
+  background: #2b2b2ba6;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.import-progress-bar {
+  height: 100%;
+  background: var(--accent-color-mixed);
+  border-radius: var(--border-radius-lg);
+  transition: width 0.3s ease;
+}
+
+.import-progress-status {
+  font-size: 12px;
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+}
+
+.import-result {
+  padding: 8px 12px;
+  background: color-mix(in srgb, #4CAF50 10%, var(--input-bg-color));
+  border: 1px solid color-mix(in srgb, #4CAF50 25%, transparent);
+  border-radius: var(--border-radius-sm);
+  font-size: 13px;
+  font-family: SFRegular;
+  color: var(--text-color);
+}
+
+.import-result-error {
+  background: color-mix(in srgb, #ff3b30 10%, var(--input-bg-color));
+  border-color: color-mix(in srgb, #ff3b30 25%, transparent);
+  color: #ff6b6b;
+}
+
+.import-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.import-run-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--accent-color), #9b9b9b 40%);
+  border: 1px solid var(--accent-color-mixed);
+  border-radius: var(--border-radius-sm);
+  color: black;
+  font-family: SFBold;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.import-run-btn:hover:not(:disabled) {
+  filter: brightness(0.85);
+}
+
+.import-run-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.import-cancel-btn {
+  padding: 10px 16px;
+  background: var(--input-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-color);
+  font-family: SFBold;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.import-cancel-btn:hover:not(:disabled) {
+  border-color: var(--accent-color-mixed);
+}
+
+.import-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Version Select */
+.import-version-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.import-version-label {
+  font-size: 12px;
+  color: var(--text-color-grayed);
+  font-family: SFRegular;
+}
+
+.import-version-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.import-version-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-color);
+  font-family: SFBold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.import-version-btn:hover:not(:disabled) {
+  border-color: var(--accent-color-mixed);
+  background: color-mix(in srgb, var(--accent-color-mixed), transparent 88%);
+}
+
+.import-version-btn.active {
+  background: color-mix(in srgb, var(--accent-color), #9b9b9b 40%);
+  border-color: var(--accent-color-mixed);
+  color: black;
+}
+
+.import-version-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
