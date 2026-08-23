@@ -1,0 +1,108 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  -webkit-app-region: drag; /* Позволяет перетаскивать окно */
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--border-radius-sm);
+  background: var(--input-bg-color);
+  padding: var(--padding-sm);
+  width: 180px;
+  height: 46px;
+  -webkit-app-region: no-drag; /* Отключаем drag для интерактивных элементов */
+}
+
+.account-avatar img {
+  width: 28px;
+  height: 28px;
+  border-radius: calc(var(--border-radius-sm) - 4px);
+  image-rendering: pixelated;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-name {
+  font-size: 12px;
+  font-family: SFBold;
+}
+
+.info-subscribe {
+  font-size: 11px;
+  color: var(--text-color-grayed-48);
+}
+
+.header-nickname {
+  flex: 1;
+  max-width: 300px;
+  -webkit-app-region: no-drag; /* Отключаем drag для поля ввода */
+}
+
+.header-nickname input {
+  width: 100%;
+  height: 46px;
+  padding: var(--padding-md) var(--padding-md);
+  border-radius: var(--border-radius-sm);
+  background: var(--input-bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 13px;
+  transition: var(--transition);
+}
+
+.header-nickname input:focus {
+  border-color: var(--accent-color-mixed);
+  outline: none;
+}
+
+.header-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  height: 46px;
+  border-radius: var(--border-radius-sm);
+  background: var(--input-bg-color);
+  padding: 4px;
+  -webkit-app-region: no-drag; /* Отключаем drag для кнопок */
+}
+
+.header-btn {
+  width: 26px;
+  height: 38px;
+  background: transparent;
+  border: none;
+  color: var(--text-color-grayed-24);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-btn:hover {
+  color: var(--text-color-grayed);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.header-btn-close:hover {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+}

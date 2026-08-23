@@ -1,0 +1,44 @@
+appId: com.kaleka.launcher
+productName: Kaleka Launcher
+executableName: Kaleka
+fileAssociations:
+  - ext: kl
+    name: Kaleka Modpack
+    description: Kaleka Launcher Modpack
+    role: Editor
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - src/renderer/public/**/*
+  - package.json
+extraResources:
+  - from: src/renderer/public/assets
+    to: assets
+publish:
+  provider: github
+  owner: jamshutbr-cmyk
+  repo: kaleka-launcher
+win:
+  forceCodeSigning: false
+  target:
+    - nsis
+  # Без пробелов в имени файла! GitHub при загрузке ассета переименовывает
+  # пробелы (в дефис/точку), а latest.yml продолжает ссылаться на исходное
+  # имя со пробелом -> electron-updater качает несуществующий файл -> 404.
+  artifactName: Kaleka-Launcher-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Kaleka
+mac:
+  target:
+    - dmg
+  category: public.app-category.games
+linux:
+  target:
+    - AppImage
+  category: Game

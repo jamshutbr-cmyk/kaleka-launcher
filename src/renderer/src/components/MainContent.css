@@ -1,0 +1,37 @@
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  -webkit-app-region: no-drag; /* Отключаем drag для контента чтобы можно было взаимодействовать */
+}
+
+.main-content.transitioning {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Плавная прокрутка */
+.main-content {
+  scroll-behavior: smooth;
+}
+
+/* Стилизация scrollbar */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}

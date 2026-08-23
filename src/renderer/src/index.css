@@ -1,0 +1,93 @@
+@font-face {
+  font-family: SFRegular;
+  src: url(/assets/asset_7.ttf);
+}
+@font-face {
+  font-family: SFBold;
+  src: url(/assets/asset_8.ttf);
+}
+@font-face {
+  font-family: Icons;
+  src: url(/assets/asset_9.ttf);
+}
+
+:root {
+  --transition: all 0.3s ease-in-out;
+  --accent-color: #4caf50;
+  --accent-color-mixed: color-mix(in srgb, var(--accent-color) 67%, #2c2c2c 87%);
+  --background-color: color-mix(in srgb, var(--accent-color-mixed), #080808 95%);
+  --padding-lg: 24px;
+  --padding-md: 12px;
+  --padding-sm: 8px;
+  --border-radius-lg: 24px;
+  --border-radius-md: 12px;
+  --border-radius-sm: 8px;
+  --text-color: white;
+  --text-color-grayed: #ffffff7a;
+  --text-color-grayed-48: #ffffff7a;
+  --text-color-grayed-24: #ffffff3d;
+  --text-color-grayed-12: #ffffff1f;
+  --border-color: #1b1a1e;
+  --input-bg-color: color-mix(in srgb, var(--accent-color-mixed) 4.5%, #111111);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+*:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+*:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+input:focus,
+button:focus,
+textarea:focus,
+select:focus,
+a:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+*::selection {
+  background-color: color-mix(in srgb, var(--accent-color), transparent 75%);
+  color: var(--text-color);
+}
+
+*::-webkit-scrollbar {
+  width: 2px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--text-color-grayed-12);
+}
+
+body {
+  font-family: SFRegular, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  background: #040405;
+  color: var(--text-color);
+  user-select: none;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  background: var(--background-color);
+  border: 1px solid var(--border-color);
+}
+
+.icon-font {
+  font-family: Icons, sans-serif !important;
+}
