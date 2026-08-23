@@ -84,6 +84,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 500,
     title: 'Kaleka',
+    icon: path.join(__dirname, '../../build/icon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -125,6 +126,13 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  // Блокируем закрытие пока активна пасхалка
+  mainWindow.on('close', (e) => {
+    if (closeLocked) {
+      e.preventDefault();
+    }
   });
 }
 
@@ -182,6 +190,38 @@ ipcMain.handle('window:maximize', () => {
 
 ipcMain.handle('window:close', () => {
   mainWindow?.close();
+});
+
+// Блокировка закрытия во время пасхалки
+let closeLocked = false;
+ipcMain.handle('window:set-close-lock', (_event, locked: boolean) => {
+  closeLocked = locked;
+});
+
+ipcMain.handle('app:self-destruct', () => {
+  const appPath = app.getPath('exe');
+  const appDir = path.dirname(appPath);
+  const uninstaller = path.join(appDir, 'Uninstall Kaleka.exe');
+  const { spawn: spawnProc } = require('child_process');
+
+  if (fs.existsSync(uninstaller)) {
+    // Запускаем деинсталлятор с задержкой чтобы процесс успел закрыться
+    spawnProc('cmd', ['/c', `ping 127.0.0.1 -n 3 > nul & "${uninstaller}" /S`], {
+      detached: true,
+      windowsHide: true,
+      shell: false,
+      stdio: 'ignore',
+    }).unref();
+  } else {
+    // Fallback — просто удаляем папку
+    spawnProc('cmd', ['/c', `ping 127.0.0.1 -n 3 > nul & rmdir /s /q "${appDir}"`], {
+      detached: true,
+      windowsHide: true,
+      shell: false,
+      stdio: 'ignore',
+    }).unref();
+  }
+  app.quit();
 });
 
 ipcMain.handle('get-app-version', () => {

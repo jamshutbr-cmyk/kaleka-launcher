@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.invoke('window:minimize'),
   maximize: () => ipcRenderer.invoke('window:maximize'),
   close: () => ipcRenderer.invoke('window:close'),
+  selfDestruct: () => ipcRenderer.invoke('app:self-destruct'),
+  setCloseLock: (locked: boolean) => ipcRenderer.invoke('window:set-close-lock', locked),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   
   // Minecraft API

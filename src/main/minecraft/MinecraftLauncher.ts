@@ -239,7 +239,14 @@ export async function launchMinecraft(options: LaunchOptions): Promise<void> {
   const logFile = path.join(logsDir, 'launcher-latest.log');
   const logStream = fs.createWriteStream(logFile, { flags: 'w' });
 
-  const minecraftProcess = spawn(javaPath, args, {
+  // Use javaw.exe instead of java.exe on Windows to suppress the console window.
+  // javaw.exe is always in the same bin/ folder as java.exe.
+  const effectiveJavaPath =
+    process.platform === 'win32'
+      ? javaPath.replace(/java\.exe$/i, 'javaw.exe')
+      : javaPath;
+
+  const minecraftProcess = spawn(effectiveJavaPath, args, {
     cwd: minecraftDir,
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
